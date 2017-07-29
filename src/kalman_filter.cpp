@@ -24,14 +24,8 @@ void KalmanFilter::Predict() {
   P_ = F_ * P_ * Ft + Q_;
 }
 
-void KalmanFilter::Update(const VectorXd &z) {
-
-  //Get Measurement from sensor
-  VectorXd z_pred = H_ * x_;
-  VectorXd y = z - z_pred;
-  
-
-  //Compute Kalman gain
+void KalmanFilter::ComputeEstimateAndUpdate(const VectorXd& y)
+{
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
@@ -45,7 +39,15 @@ void KalmanFilter::Update(const VectorXd &z) {
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
-  
+
+}
+
+void KalmanFilter::Update(const VectorXd &z) {
+
+  //Get Measurement from sensor
+  VectorXd z_pred = H_ * x_;
+  VectorXd y = z - z_pred;
+  ComputeEstimateAndUpdate(y);  
 }
 
 
@@ -88,9 +90,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   float angle = y(1);
 
   if ((angle > PI) || (angle < -1 * PI))
-  {
-    
-
+  { 
     while(angle > PI)
     {
       angle -= 2 * PI ;
@@ -101,26 +101,11 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
       angle += 2 * PI ;
     }
 
-  y(1) = angle;
-  
-
-
+    y(1) = angle;
   }
 
+  ComputeEstimateAndUpdate(y); 
 
-
-
-  MatrixXd Ht = H_.transpose();
-  MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
-  MatrixXd K = PHt * Si;
-
-  //new estimate
-  x_ = x_ + (K * y);
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  P_ = (I - K * H_) * P_;
 }
 
 
