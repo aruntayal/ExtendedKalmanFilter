@@ -1,5 +1,5 @@
 #include "kalman_filter.h"
-
+#include<iostream>
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -66,7 +66,7 @@ MatrixXd GetRadarMeas(const VectorXd& x_state) {
     z_radar(0) = sqrt(pow(px,2)+pow(py,2));
 
     if (sqrt(pow(px,2)+pow(py,2))<.0001){
-        z_radar(2) = (px*vx+py*vy)/0.0001;
+        z_radar(2) = 0;
     }
     else{
         z_radar(2) = (px*vx+py*vy)/sqrt(pow(px,2)+pow(py,2));
@@ -82,8 +82,34 @@ MatrixXd GetRadarMeas(const VectorXd& x_state) {
 
 }
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
+  const float PI = 3.14;
   VectorXd z_pred = GetRadarMeas(x_); //H_ * x_;
   VectorXd y = z - z_pred;
+  float angle = y(1);
+
+  if ((angle > PI) || (angle < -1 * PI))
+  {
+    
+
+    while(angle > PI)
+    {
+      angle -= 2 * PI ;
+    }
+
+    while(angle < (-1 * PI))
+    {
+      angle += 2 * PI ;
+    }
+
+  y(1) = angle;
+  
+
+
+  }
+
+
+
+
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
